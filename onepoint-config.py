@@ -4,10 +4,10 @@ import sys
 import time
 import wget
 import mysql.connector as mysql
+import subprocess
 
 def Default():
 	print("Iniciando configuracao Padrao")
-	cmd = "yum install -y https://rpms.remirepo.net/enterprise/remi-release-7.rpm -q | pv -L 1m"
 	os.system("systemctl disable firewalld && systemctl stop firewalld")
 	os.system(cmd)
 	print("Verificando Diretorios Padrao")
@@ -142,6 +142,7 @@ def MariaDB():
 def InstallOnepoint():
 	print("Instalando repositorio Onepoint")
 	cmd = os.system("yum install -y http://repo.onepoint.net.br/yum/centos/repo/onepoint-repo-0.1-1centos.noarch.rpm  -q | pv -L 1m")
+	instOnepoint = os.system("yum install -y onepoint -q | pv -L 1m")
 	if cmd:
 		print("Instalando Onepoint")
 		cmd = os.system("yum install -y onepoint")
@@ -183,7 +184,28 @@ def VaultConfigFinal():
 
 
 if __name__ == "__main__":
-	Default()
+	print("Iniciando configutracao Padrao do ambiente")
+	print("Verificando versao DO SO")
+	verOS=subprocess.check_output('rpm --eval %{centos_ver}', shell=True).rstrip('\n')
+	if verOS != '7':
+		print("Esta versao do SO nao e suportada pelo Onepoint [Versao SO: %s" %verOS)
+		exit
+	else:
+		print("Verificando todas as dependencias")
+	#	os.system("pip install wget && pip install mysql-connector-python")
+		os.system("yum install pv -y")
+		print("Instalando Remi")
+		instRemi = os.system("yum install -y https://rpms.remirepo.net/enterprise/remi-release-7.rpm -q | pv -L 1m")
+		gcM = raw_input("Voce deseja instalar o Guacamole? (yes/no)")
+		if gcM == "yes":
+			print("Instalando Guacamole")
+			os.system("yum install guacd  -y -q | pv -L 1m")
+			print("Iniciando servico Guacamole")
+			os.system("systemctl enable guacd.service && systemctl start guacd.service")
+			Default()
+		else:
+			Default()
 	#VaultH()
 #	MariaDB()
 #	VaultConfigFinal()
+
